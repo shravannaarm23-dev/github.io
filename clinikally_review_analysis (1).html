@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinikally — App Store Review Analysis · APM POW</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F6F5F1;
+    --surface: #FFFFFF;
+    --surface-muted: #F0EEE9;
+    --text: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    --border: rgba(0,0,0,0.09);
+    --border-strong: rgba(0,0,0,0.15);
+    --red: #B91C1C;
+    --red-light: #FEF2F2;
+    --red-border: #FECACA;
+    --amber: #B45309;
+    --amber-light: #FFFBEB;
+    --amber-border: #FDE68A;
+    --blue: #1D4ED8;
+    --blue-light: #EFF6FF;
+    --green: #065F46;
+    --radius: 8px;
+    --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    --mono: 'SFMono-Regular', 'Consolas', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141412;
+      --surface: #1E1D1B;
+      --surface-muted: #252421;
+      --text: #F5F4F0;
+      --text-secondary: #C3C2B7;
+      --text-muted: #6B6A64;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --red: #F87171;
+      --red-light: #3B1515;
+      --red-border: #7F1D1D;
+      --amber: #FCD34D;
+      --amber-light: #2D1E05;
+      --amber-border: #78350F;
+      --blue: #60A5FA;
+      --blue-light: #1E3A5F;
+      --green: #34D399;
+    }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 40px 20px 80px;
+  }
+
+  .wrap { max-width: 700px; margin: 0 auto; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.4px;
+    margin-bottom: 12px;
+  }
+
+  .lead {
+    font-size: 15px;
+    color: var(--text-secondary);
+    max-width: 560px;
+    line-height: 1.75;
+    margin-bottom: 36px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 44px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 6px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .section {
+    border-top: 1px solid var(--border);
+    padding-top: 36px;
+    margin-bottom: 44px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .section-sublabel {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .complaint {
+    border-left: 4px solid;
+    border-radius: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+  }
+
+  .complaint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .complaint-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .complaint-body {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+
+  .risk-note {
+    border-left: 2px solid;
+    border-radius: 0;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .root-cause {
+    border-left: 4px solid var(--red);
+    border-radius: 0;
+    background: var(--red-light);
+    padding: 16px 20px;
+    margin-top: 6px;
+  }
+
+  .root-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 6px;
+  }
+
+  .root-text {
+    font-size: 13px;
+    color: var(--red);
+    line-height: 1.75;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 420px;
+  }
+
+  .chart-note {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-top: 14px;
+  }
+
+  .flag-box {
+    background: var(--amber-light);
+    border-left: 4px solid var(--amber);
+    border-radius: 0;
+    padding: 16px 20px;
+  }
+
+  .flag-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+
+  .flag-text + .flag-text {
+    margin-top: 10px;
+  }
+
+  .rec {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .priority {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    letter-spacing: 0.5px;
+    font-family: var(--mono);
+  }
+
+  .rec-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .rec-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface-muted);
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+
+  .rec-body {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 44px;
+  }
+
+  .red-text { color: var(--red); }
+  .blue-text { color: var(--blue); }
+  .green-text { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">APM proof-of-work · Clinikally (YC S22)</span>
+
+  <h1>3 complaints in 160 reviews.<br>
+    <span class="red-text">All three describe the same broken infrastructure.</span>
+  </h1>
+
+  <p class="lead">
+    App discovery, checkout, and consultation are consistently praised. The failure is entirely post-purchase — and it extends across delivery, fulfillment quality, and every support channel simultaneously.
+  </p>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-value blue-text">160</div>
+      <div class="kpi-label">Reviews analysed<br>Jun 30 – Jul 2, 2026</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value green-text">98.1%</div>
+      <div class="kpi-label">Positive sentiment<br>157 of 160 reviews</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value red-text">3</div>
+      <div class="kpi-label">Critical complaints<br>All post-purchase</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value blue-text">9</div>
+      <div class="kpi-label">Feature themes<br>Mapped from review text</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-value" style="color:var(--amber)">+IG</div>
+      <div class="kpi-label">Instagram comments<br>cross-referenced</div>
+    </div>
+  </div>
+
+  <!-- Complaints -->
+  <div class="section">
+    <div class="section-label red-text">The 3 complaints</div>
+
+    <div class="complaint" style="border-left-color: var(--red);">
+      <div class="complaint-header">
+        <div>
+          <span style="font-weight:600;font-size:13px">Shaik Iliyas</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Jul 2, 2026 · Order #CLY4508039</span>
+        </div>
+        <span class="badge" style="background:var(--red);color:#fff">CRITICAL</span>
+      </div>
+      <p class="complaint-title">Prescription medicine (₹2,500) not delivered — support line non-functional</p>
+      <p class="complaint-body">Doctor-prescribed order placed Jun 30. Zero communication for 3 days. Phone support held 30 minutes without connecting once.</p>
+      <div class="risk-note" style="border-left-color:var(--amber);background:var(--amber-light);color:var(--amber)">Prescription non-fulfillment is a health risk, not just a logistics miss.</div>
+    </div>
+
+    <div class="complaint" style="border-left-color: var(--amber);">
+      <div class="complaint-header">
+        <div>
+          <span style="font-weight:600;font-size:13px">Sagar Sah</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Jul 1, 2026</span>
+        </div>
+        <span class="badge" style="background:#92400E;color:#fff">HIGH</span>
+      </div>
+      <p class="complaint-title">Wrong product (minoxidil → moisturiser) + broken return — 16 days unresolved</p>
+      <p class="complaint-body">7-day wait for wrong delivery. 7 more for return with no resolution. Support messages ignored throughout.</p>
+      <div class="risk-note" style="border-left-color:var(--amber);background:var(--amber-light);color:var(--amber)">Hairfall treatment disrupted with no escalation path visible to the user.</div>
+    </div>
+
+    <div class="complaint" style="border-left-color: var(--amber);">
+      <div class="complaint-header">
+        <div>
+          <span style="font-weight:600;font-size:13px">Tina Saikia</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Jul 2, 2026</span>
+        </div>
+        <span class="badge" style="background:#92400E;color:#fff">HIGH</span>
+      </div>
+      <p class="complaint-title">Order not received, no update, no support response</p>
+      <p class="complaint-body">Brief but representative — complete post-purchase silence with no visible resolution path.</p>
+      <div class="risk-note" style="border-left-color:var(--amber);background:var(--amber-light);color:var(--amber)">Customer has zero visible path to resolution.</div>
+    </div>
+
+    <div class="root-cause">
+      <div class="root-label">Root cause — shared across all three</div>
+      <p class="root-text">Post-purchase operations are broken. No functioning support line. No proactive delivery communication. No exception-handling for fulfillment failures. Discovery and checkout clearly work — the failure starts the moment an order leaves the cart.</p>
+    </div>
+  </div>
+
+
+  <!-- Instagram Signals -->
+  <div class="section">
+    <div class="section-label" style="color:var(--amber)">Instagram signals — post-purchase failure confirmed across channels</div>
+    <p class="section-sublabel">Clinikally's Instagram comments surface three signals that the Play Store data couldn't — a named delivery partner, a supply chain integrity failure, and evidence that support is broken across every channel simultaneously.</p>
+
+    <div class="complaint" style="border-left-color: var(--red);">
+      <div class="complaint-header">
+        <div>
+          <span style="font-weight:600;font-size:13px">Signal 1 — Elastic Run identified as last-mile culprit</span>
+        </div>
+        <span class="badge" style="background:var(--red);color:#fff">SUPPLY CHAIN</span>
+      </div>
+      <p class="complaint-body">A commenter names Elastic Run explicitly as the delivery partner — reporting rude behaviour, refusal to hand over the package without cash payment upfront, and aggressive conduct at the customer's door. The Play Store complaints showed delivery was failing; Instagram tells us who is failing. Clinikally holds accountability for its last-mile partner's conduct regardless of contractual structure.</p>
+      <div class="risk-note" style="border-left-color:var(--amber);background:var(--amber-light);color:var(--amber)">Vendor conduct creates brand risk. Elastic Run's behaviour is visible to Clinikally's Instagram audience.</div>
+    </div>
+
+    <div class="complaint" style="border-left-color: var(--red);">
+      <div class="complaint-header">
+        <div>
+          <span style="font-weight:600;font-size:13px">Signal 2 — Possible product substitution: Minoxidil → mustard oil</span>
+        </div>
+        <span class="badge" style="background:var(--red);color:#fff">CRITICAL</span>
+      </div>
+      <p class="complaint-body">A 4-time repeat customer reports receiving what they describe as mustard oil inside a Minoxidil bottle. They contacted customer care, were told returns are not accepted, and have permanently stopped ordering. This is not a logistics failure — it is a warehouse or vendor-level fulfillment quality control failure. If confirmed, it represents a supply chain integrity gap on a clinical product that directly impacts patient safety.</p>
+      <div class="risk-note" style="border-left-color:var(--red);background:var(--red-light);color:var(--red)">A loyal customer (4 orders) lost permanently. If this is a warehouse-level substitution pattern, it is a safety and regulatory exposure, not a one-off logistics miss.</div>
+    </div>
+
+    <div class="complaint" style="border-left-color: var(--amber);">
+      <div class="complaint-header">
+        <div>
+          <span style="font-weight:600;font-size:13px">Signal 3 — Support blackout confirmed across all channels</span>
+        </div>
+        <span class="badge" style="background:#92400E;color:#fff">HIGH</span>
+      </div>
+      <p class="complaint-body">Multiple commenters independently report: WhatsApp unresponsive, Instagram DMs ignored, phone calls with 40+ minute waits resulting in no connection. One customer filed a formal written escalation citing a prepaid prescription medicine order (Order CLK4108309) still undelivered. The Play Store analysis showed the phone line was broken; Instagram confirms the failure extends to every available channel.</p>
+      <div class="risk-note" style="border-left-color:var(--amber);background:var(--amber-light);color:var(--amber)">A customer with a prescription order and zero support access is a health risk. The formal escalation suggests at least one customer is already preparing a consumer complaint.</div>
+    </div>
+
+    <div class="root-cause">
+      <div class="root-label">What Instagram adds to the Play Store picture</div>
+      <p class="root-text">Play Store showed the outcome (poor ratings, complaints). Instagram shows the mechanism: a specific named delivery partner failing operationally, possible warehouse quality control failures on clinical products, and a support infrastructure that has no functional channel — not one. These are not isolated incidents. They are three expressions of the same structural gap in post-purchase operations.</p>
+    </div>
+  </div>
+
+  <!-- What users praise -->
+  <div class="section">
+    <div class="section-label" style="color:var(--text-muted)">What users praise</div>
+    <p class="section-sublabel">Primary theme per review, across 157 positive reviews. Concern-based browsing leads by a clear margin.</p>
+    <div class="chart-wrap">
+      <canvas id="themeChart" role="img" aria-label="Horizontal bar chart of 9 feature themes by mention count. Concern browsing leads with 28.">
+        Concern browsing 28, Checkout and ordering 22, App UX and speed 18, Dermat consultation 16, Value picks and pricing 15, Ingredient search 13, Global brands 9, Delivery and tracking 8, Product efficacy 7.
+      </canvas>
+    </div>
+    <p class="chart-note">→ Concern-based browsing is Clinikally's clearest differentiator. Clara (AI routine-builder, surfaced once by user Ramesh Kumar) is an underutilised surface worth expanding here.</p>
+  </div>
+
+  <!-- Proactive flag -->
+  <div class="section">
+    <div class="section-label" style="color:var(--amber)">Proactive flag — unusual review volume pattern</div>
+    <div class="flag-box">
+      <p class="flag-text">Around 150 of 160 reviews are dated June 30 alone — a single-day spike. Several share near-identical sentence structures and vocabulary ("found X in seconds", "placed order in under two minutes"). A visible subset of reviewer handles are gaming-adjacent (<em>Pubg Ayu, Gamer47 Kakarot, Devil Gaming, Raja Gaming</em>), atypical for a skincare platform.</p>
+      <p class="flag-text">This is consistent with an incentivised review push or review-gating, both of which violate Google Play policy. If a campaign ran on June 30, it's worth auditing before enforcement triggers and removes the accumulated rating — currently the app's primary social proof signal.</p>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="section">
+    <div class="section-label" style="color:var(--text-muted)">What I'd prioritise — first 30 days</div>
+    <p class="section-sublabel">P0 is existential. P1 is high-impact and achievable fast. P2 builds the moat.</p>
+
+    <div class="rec">
+      <span class="priority" style="background:var(--red);color:#fff">P0</span>
+      <div>
+        <div class="rec-header">
+          <span class="rec-title">Audit Minoxidil fulfillment — possible product substitution</span>
+          <span class="tag">Supply Chain · Safety</span>
+        </div>
+        <p class="rec-body">A 4-time repeat customer reports receiving what they describe as mustard oil inside a Minoxidil bottle. If this is a warehouse-level pattern rather than a one-off, it is a clinical safety issue and a regulatory exposure. Warehouse QC on clinical and prescription products needs an immediate audit before scale amplifies it.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <span class="priority" style="background:var(--red);color:#fff">P0</span>
+      <div>
+        <div class="rec-header">
+          <span class="rec-title">Restore support across all channels — phone, WhatsApp, DMs</span>
+          <span class="tag">Ops</span>
+        </div>
+        <p class="rec-body">The phone line is non-functional (30+ minute holds, no connection). WhatsApp is unresponsive. Instagram DMs are ignored. At least one customer has filed a formal escalation. On a platform selling prescription and dermatologist-recommended products, zero-channel support access is a liability across operations, legal, and brand.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <span class="priority" style="background:#92400E;color:#fff">P1</span>
+      <div>
+        <div class="rec-header">
+          <span class="rec-title">Proactive SLA-breach notifications</span>
+          <span class="tag">Product</span>
+        </div>
+        <p class="rec-body">Any order past its delivery window should auto-trigger in-app and SMS status updates without the customer chasing. Rx orders need a shorter SLA and a dedicated queue separate from OTC.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <span class="priority" style="background:#92400E;color:#fff">P1</span>
+      <div>
+        <div class="rec-header">
+          <span class="rec-title">Fast-track return flow for wrong fulfillment</span>
+          <span class="tag">Product · Ops</span>
+        </div>
+        <p class="rec-body">Sagar's case sat unresolved for 16+ days. A "Wrong item received" option with a 48-hour SLA and auto-escalation for medication orders would close this structurally.</p>
+      </div>
+    </div>
+
+    <div class="rec">
+      <span class="priority" style="background:var(--blue);color:#fff">P2</span>
+      <div>
+        <div class="rec-header">
+          <span class="rec-title">Deepen concern-based browsing — it's the moat</span>
+          <span class="tag">Growth</span>
+        </div>
+        <p class="rec-body">28 of 157 positive reviews named this explicitly — the highest theme share. Expand Clara's routine-building capability, deepen ingredient cross-linking, and A/B test concern-first as the default home tab.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>160 Google Play reviews + Instagram comments · Jun 30 – Jul 2026 · Built as proof-of-work for APM role at Clinikally</footer>
+</div>
+
+<script>
+const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+new Chart(document.getElementById('themeChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'Concern browsing','Checkout & ordering','App UX & speed',
+      'Dermat consultation','Value picks & pricing','Ingredient search',
+      'Global brands','Delivery & tracking','Product efficacy'
+    ],
+    datasets: [{
+      data: [28,22,18,16,15,13,9,8,7],
+      backgroundColor: ['#185FA5','#1d6bb8','#2a78d6','#3987e5','#5b9fec','#7bb5f2','#9dcaf7','#bce0fc','#cfe5fb'],
+      borderWidth: 0,
+      borderRadius: {topRight:4,bottomRight:4,topLeft:0,bottomLeft:0},
+      barPercentage: 0.52
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {display:false},
+      tooltip: {
+        callbacks: {label: ctx => ` ${ctx.raw} reviews`},
+        backgroundColor: isDark ? '#252421' : '#ffffff',
+        titleColor: isDark ? '#F5F4F0' : '#111827',
+        bodyColor: isDark ? '#C3C2B7' : '#4B5563',
+        borderColor: isDark ? '#3d3c38' : '#e5e7eb',
+        borderWidth: 1
+      }
+    },
+    scales: {
+      x: {
+        grid: {color: isDark ? '#2c2b29' : '#e5e7eb'},
+        border: {display:false},
+        ticks: {color:'#9CA3AF', font:{size:11, family:'-apple-system, sans-serif'}}
+      },
+      y: {
+        grid: {display:false},
+        border: {display:false},
+        ticks: {
+          color: isDark ? '#C3C2B7' : '#4B5563',
+          font: {size:12, family:'-apple-system, sans-serif'},
+          padding: 8
+        }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
