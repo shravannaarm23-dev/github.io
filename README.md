@@ -2,7 +2,7 @@
 
 Personal portfolio and proof-of-work case studies.
 
-**Live site:** https://shravannaarm23-dev.github.io
+**Live site:** https://shravannaarm23-dev.github.io/github.io/
 
 ## Projects
 
